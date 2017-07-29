@@ -1,11 +1,12 @@
-import helpers
-import time
 import json
-import requests
-import imaplib
+import time
 from datetime import datetime
+
 from apiclient import discovery
 from todoist.api import TodoistAPI
+
+import helpers
+
 
 class Todoist:
     def __init__(self):
@@ -25,7 +26,7 @@ class Todoist:
     def get_urgent_tasks(self):
         return helpers.urgent_task_filter(self.get_all_tasks())
 
-    def get_project_name(task):
+    def get_project_name(self, task):
         return self.api.projects.get(task['project_id'])
 
     def complete_task(self, task_name):
@@ -50,10 +51,11 @@ class Todoist:
             date = ' '.join(task['due_date_utc'].split()[:4])
 
         print(
-                str(date) + '\t' +
-                str(project_name) + '\t' +
-                str(task['content'])
-             )
+            str(date) + '\t' +
+            str(project_name) + '\t' +
+            str(task['content'])
+        )
+
 
 class Timer:
     def __init__(self):
@@ -68,6 +70,7 @@ class Timer:
         helpers.write_settings('timer', self.settings)
 
     def current_timer(self):
+        print(self.settings['description'])
         return self.settings['description']
 
     def stop(self):
@@ -86,20 +89,22 @@ class Timer:
 
         helpers.write_settings('timer', self.settings)
 
+
 class Gmail:
     def __init__(self):
         with open('settings.json', 'r') as settings_file:
             # storage_files: {email: file_name}
             self.settings = json.load(settings_file)['gmail']
 
-        self.connections = {email: discovery.build('gmail', 'v1', helpers.get_oauth_connection(file_name)) for email, file_name in self.settings['storage_files'].items()}
-    
+        self.connections = {email: discovery.build('gmail', 'v1', helpers.get_oauth_connection(file_name)) for
+                            email, file_name in self.settings['storage_files'].items()}
+
     def get_num_unread(self):
         output = {}
 
         for email, conn in self.connections.items():
             service = discovery.build('gmail', 'v1', http=conn)
-            
+
             response = service.users().messages().list(userId='me', q='is:unread').execute()
             num_messages = 0
             if 'messages' in response:
@@ -114,6 +119,7 @@ class Gmail:
 
         return output
 
+
 class Calendar:
     def __init__(self):
         with open('settings.json', 'r') as settings_file:
@@ -124,17 +130,26 @@ class Calendar:
 
     def get_today_schedule(self):
         start, end = helpers.get_today_bounds()
-        events_result = self.service.events().list(calendarId='primary', orderBy='startTime', timeMax=start, timeMin=end)
+        events_result = self.service.events().list(calendarId='primary', orderBy='startTime', timeMax=start,
+                                                   timeMin=end)
         return events_result.get('items', [])
 
     def add(self, event_text):
         self.service.events().quickAdd(calendarId='primary', text=event_text)
 
-    def print_event(self, event):
+    @staticmethod
+    def print_event(event):
         print(
                 event['description'] + ' from ' + 
                 event['start']['dateTime'].strftime('%H:%M') + ' to ' +
                 event['end']['dateTime'].strftime('%H:%M')
              )
 
-
+        '''
+        # alternative method for print
+        print('{} from {} to {}'.format(event['description'],
+                                        event['start']['dateTime'].strftime('%H:%M'),
+                                        event['end']['dateTime'].strftime('%H:%M')
+                                        )
+              )
+        '''
