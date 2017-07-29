@@ -12,7 +12,7 @@ Description:
     actions that don't require an api call are als put here.
 """
 import apis as _apis
-import itertools as _itertools
+from itertools import tee as _tee
 
 '''
 util funcs not needed outside module
@@ -21,7 +21,7 @@ util funcs not needed outside module
 
 def _pairwise(iterable):
     """"s -> (s0,s1), (s1,s2), (s2, s3), ..."""
-    a, b = _itertools.tee(iterable)
+    a, b = _tee(iterable)
     next(b, None)
     return zip(a, b)
 
